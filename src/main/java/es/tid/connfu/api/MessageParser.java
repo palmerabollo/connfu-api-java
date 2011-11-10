@@ -1,33 +1,31 @@
 package es.tid.connfu.api;
 
 import java.io.IOException;
-import java.util.Map;
 
+import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 
 public class MessageParser {
     private static ObjectMapper mapper = new ObjectMapper();
 
     public static Message parse(String text) throws IOException {
-        Map messageMap = mapper.readValue(text, Map.class);
+        JsonNode json = mapper.readTree(text);
+
+        // TODO parse different kind of messages
 
         Message message = new Message();
         message.setChannel(ChannelType.RSS);
-        message.setContent(getField(messageMap, "content"));
-        message.setFrom(getField(messageMap, "from"));
-        message.setTo(getField(messageMap, "to"));
-        message.setId(getField(messageMap, "id"));
+        message.setContent(getField(json, "message"));
+        message.setFrom(getField(json, "from"));
+        message.setTo(getField(json, "to"));
+        message.setId(getField(json, "id"));
 
         message.setEvent(EventType.NEW); // TODO support voice ...
 
         return message;
     }
 
-    private static String getField(Map messageMap, String field) {
-        if (messageMap.containsKey(field)) {
-            return messageMap.get(field).toString();
-        } else {
-            return null;
-        }
+    private static String getField(JsonNode json, String field) {
+        return json.findPath(field).getTextValue();
     }
 }
